@@ -81,13 +81,7 @@ module bsg_manycore_tile_compute_ruche
     ,.data_o(reset_r)
   );
 
-  bsg_dff #(
-    .width_p(1)
-  ) dff_reset2 (
-    .clk_i(clk_i)
-    ,.data_i(reset_r)
-    ,.data_o(reset_o)
-  );
+  assign reset_o = reset_r;
 
   logic [x_subcord_width_lp-1:0] my_x_r;
   logic [y_subcord_width_lp-1:0] my_y_r;
