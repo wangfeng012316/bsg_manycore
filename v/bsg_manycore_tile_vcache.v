@@ -41,6 +41,7 @@ module bsg_manycore_tile_vcache
   (
     input clk_i
     , input reset_i
+    , output logic reset_o
 
     , input  [wh_ruche_factor_p-1:0][E:W][wh_link_sif_width_lp-1:0] wh_link_sif_i
     , output [wh_ruche_factor_p-1:0][E:W][wh_link_sif_width_lp-1:0] wh_link_sif_o  
@@ -51,9 +52,11 @@ module bsg_manycore_tile_vcache
     // manycore cord
     , input [x_cord_width_p-1:0] global_x_i
     , input [y_cord_width_p-1:0] global_y_i
+    , output logic [x_cord_width_p-1:0] global_x_o
+    , output logic [y_cord_width_p-1:0] global_y_o
 
     // wormhole cord
-    , input [wh_cord_width_p-1:0] my_wh_cord_i
+    //, input [wh_cord_width_p-1:0] my_wh_cord_i
     , input [wh_cid_width_p-1:0]  my_wh_cid_i
     , input wh_dest_east_not_west_i
   );
@@ -74,6 +77,32 @@ module bsg_manycore_tile_vcache
     ,.data_i(reset_i)
     ,.data_o(reset_r)
   );
+
+  assign reset_o = reset_r;
+
+  // coordinate flop
+  logic [x_cord_width_p-1:0] global_x_r;
+  logic [y_cord_width_p-1:0] global_y_r;
+
+  bsg_dff #(
+    .width_p(x_cord_width_p)
+  ) x_dff (
+    .clk_i(clk_i)
+    ,.data_i(global_x_i)
+    ,.data_o(global_x_r)
+  );
+
+  bsg_dff #(
+    .width_p(y_cord_width_p)
+  ) y_dff (
+    .clk_i(clk_i)
+    ,.data_i(global_y_i)
+    ,.data_o(global_y_r)
+  );
+
+  assign global_x_o = global_x_r;
+  assign global_y_o = (y_cord_width_p)'(global_y_r+1);
+
 
   // mesh router
   // vcache connects to P
@@ -100,8 +129,8 @@ module bsg_manycore_tile_vcache
     ,.proc_link_sif_i(proc_link_sif_li)
     ,.proc_link_sif_o(proc_link_sif_lo)
 
-    ,.global_x_i(global_x_i)
-    ,.global_y_i(global_y_i)
+    ,.global_x_i(global_x_r)
+    ,.global_y_i(global_y_r)
   );
 
   assign ver_link_sif_o[S] = link_sif_lo[S];
@@ -235,7 +264,7 @@ module bsg_manycore_tile_vcache
     ,.wh_link_sif_i(cache_wh_link_li)
     ,.wh_link_sif_o(cache_wh_link_lo)
 
-    ,.my_wh_cord_i(my_wh_cord_i)
+    ,.my_wh_cord_i(global_x_r)
     ,.dest_wh_cord_i({wh_cord_width_p{wh_dest_east_not_west_i}})
     ,.my_wh_cid_i(my_wh_cid_i)
   );
@@ -258,7 +287,7 @@ module bsg_manycore_tile_vcache
     ,.link_i(wh_link_li)
     ,.link_o(wh_link_lo)
 
-    ,.my_cord_i(my_wh_cord_i)
+    ,.my_cord_i(global_x_r)
   );
 
   assign wh_link_li[P] = cache_wh_link_lo;
