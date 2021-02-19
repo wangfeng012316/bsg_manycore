@@ -103,6 +103,24 @@ module bsg_manycore_tile_vcache
   assign global_x_o = global_x_r;
   assign global_y_o = (y_cord_width_p)'(global_y_r+1);
 
+  logic [wh_cid_width_p-1:0] my_wh_cid_r;
+  bsg_dff #(
+    .width_p(wh_cid_width_p)
+  ) cid_dff (
+    .clk_i(clk_i)
+    ,.data_i(my_wh_cid_i)
+    ,.data_o(my_wh_cid_r)
+  );
+
+  logic wh_dest_east_not_west_r;
+  bsg_dff #(
+    .width_p(1)
+  ) wh_dest_dff (
+    .clk_i(clk_i)
+    ,.data_i(wh_dest_east_not_west_i)
+    ,.data_o(wh_dest_east_not_west_r)
+  );
+
 
   // mesh router
   // vcache connects to P
@@ -265,8 +283,8 @@ module bsg_manycore_tile_vcache
     ,.wh_link_sif_o(cache_wh_link_lo)
 
     ,.my_wh_cord_i(global_x_r)
-    ,.dest_wh_cord_i({wh_cord_width_p{wh_dest_east_not_west_i}})
-    ,.my_wh_cid_i(my_wh_cid_i)
+    ,.dest_wh_cord_i({wh_cord_width_p{wh_dest_east_not_west_r}})
+    ,.my_wh_cid_i(my_wh_cid_r)
   );
   
 
